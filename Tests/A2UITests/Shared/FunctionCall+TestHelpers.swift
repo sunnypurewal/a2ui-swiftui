@@ -43,8 +43,8 @@ extension FunctionCall {
         FunctionCall(call: "formatCurrency", args: ["value": AnyCodable(value), "currency": AnyCodable(currency)])
     }
 
-    static func formatDate(value: Sendable, format: Sendable) -> FunctionCall {
-        FunctionCall(call: "formatDate", args: ["value": AnyCodable(value), "format": AnyCodable(format)])
+	static func formatDate(value: Sendable, format: Sendable, timeZone: Sendable, locale: Sendable) -> FunctionCall {
+		FunctionCall(call: "formatDate", args: ["value": AnyCodable(value), "format": AnyCodable(format), "timeZone": AnyCodable(timeZone), "locale": AnyCodable(locale)])
     }
 
     static func pluralize(value: Sendable, zero: Sendable? = nil, one: Sendable? = nil, two: Sendable? = nil, other: Sendable) -> FunctionCall {

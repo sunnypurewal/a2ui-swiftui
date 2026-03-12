@@ -2,7 +2,7 @@ import Foundation
 import DataDetection
 
 extension A2UIStandardFunctions {
-	static func formatDate(value: Any, format: String, timeZone: TimeZone = .autoupdatingCurrent, locale: Locale = .autoupdatingCurrent) -> String {
+	static func formatDate(value: Any, format: String, timeZone: TimeZone, locale: Locale) -> String {
         let date: Date
         if let d = value as? Date {
             date = d
@@ -32,11 +32,10 @@ extension A2UIStandardFunctions {
         }
         
         let formatter = DateFormatter()
-		print(format, timeZone, locale)
 		formatter.timeZone = timeZone
+		formatter.locale = locale
         formatter.setLocalizedDateFormatFromTemplate(format)
         let str = formatter.string(from: date)
-        print(str)
         return str
     }
 }
