@@ -1,8 +1,12 @@
+[![Swift](https://github.com/sunnypurewal/a2ui-swiftui/actions/workflows/test.yml/badge.svg)](https://github.com/sunnypurewal/a2ui-swiftui/actions/workflows/test.yml)
+
 # A2UI SwiftUI Renderer
 
 This repo implements an A2UI Swift renderer conforming to the v0.9 A2UI spec.
 
 It is a native Swift package that provides the necessary components to parse and render A2UI protocol messages within a SwiftUI application.
+
+NOTE: The A2UI V0.9 spec is still in development. See the [google/A2UI](https://github.com/google/A2UI) repo for more information.
 
 ## Architecture Overview
 
