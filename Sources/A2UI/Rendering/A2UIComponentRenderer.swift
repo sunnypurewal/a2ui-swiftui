@@ -1,0 +1,120 @@
+import SwiftUI
+
+/// A internal view that resolves a component ID and renders the appropriate SwiftUI view.
+struct A2UIComponentRenderer: View {
+    @Environment(SurfaceState.self) var surface: SurfaceState?
+    let componentId: String
+    let surfaceOverride: SurfaceState?
+
+    init(componentId: String, surface: SurfaceState? = nil) {
+        self.componentId = componentId
+        self.surfaceOverride = surface
+    }
+    
+    private var activeSurface: SurfaceState? {
+        surfaceOverride ?? surface
+    }
+
+    var body: some View {
+        Group {
+            if let surface = activeSurface {
+                renderContent(surface: surface)
+            } else {
+                Text("Error: No SurfaceState available").foregroundColor(.red)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func renderContent(surface: SurfaceState) -> some View {
+        let (instance, contextSurface) = resolveInstanceAndContext(surface: surface)
+        let finalSurface = contextSurface ?? surface
+        
+        if let instance = instance {
+            let _ = A2UILogger.debug("Rendering component: \(componentId) (\(instance.componentTypeName))")
+            render(instance: instance, surface: finalSurface)
+                .environment(finalSurface)
+        } else {
+            let _ = A2UILogger.error("Missing component: \(componentId)")
+            // Fallback for missing components to help debugging
+            Text("Missing: \(componentId)")
+                .foregroundColor(.white)
+                .padding(4)
+                .background(Color.red)
+                .font(.caption)
+        }
+    }
+    
+    private func resolveInstanceAndContext(surface: SurfaceState) -> (instance: ComponentInstance?, contextSurface: SurfaceState?) {
+        let virtualIdParts = componentId.split(separator: ":")
+
+        // Check if it's a virtual ID from a template: "templateId:dataBinding:index"
+        if virtualIdParts.count == 3 {
+            let baseId = String(virtualIdParts[0])
+            let dataBinding = String(virtualIdParts[1])
+            let indexStr = String(virtualIdParts[2])
+
+            guard let instance = surface.components[baseId], let index = Int(indexStr) else {
+                return (nil, nil)
+            }
+
+            // The data for the specific item in the array
+            let itemPath = "\(dataBinding)/\(index)"
+            if let itemData = surface.getValue(at: itemPath) as? [String: Any] {
+                // This is a contextual surface state scoped to the item's data.
+                let contextualSurface = SurfaceState(id: surface.id)
+                contextualSurface.dataModel = itemData
+                // Carry over the other essential properties from the main surface.
+                contextualSurface.components = surface.components
+                contextualSurface.customRenderers = surface.customRenderers
+                contextualSurface.actionHandler = surface.actionHandler
+                
+                return (instance, contextualSurface)
+            }
+            
+            // Return base instance but no special context if data is missing
+            return (instance, nil)
+
+        } else {
+            // This is a regular component, not part of a template.
+            // Return the component instance and no special context surface.
+            if let component = surface.components[componentId] {
+                return (component, nil)
+            } else {
+                A2UILogger.error("Component not found in surface: \(componentId)")
+                return (nil, nil)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func render(instance: ComponentInstance, surface: SurfaceState) -> some View {
+        let content = Group {
+            // Check for custom registered components first
+            if let customRenderer = surface.customRenderers[instance.componentTypeName] {
+                customRenderer(instance)
+            } else {
+                A2UIStandardComponentView(surface: surface, instance: instance)
+            }
+        }
+        
+        let showDebugBorders = ProcessInfo.processInfo.environment["A2UI_DEBUG_BORDERS"] == "true"
+        if showDebugBorders {
+            content
+                .border(debugColor(for: instance.componentTypeName), width: 1)
+        } else {
+            content
+        }
+    }
+
+    private func debugColor(for typeName: String) -> Color {
+        switch typeName {
+        case "Column": return .blue
+        case "Row": return .green
+        case "Card": return .purple
+        case "Text": return .red
+        case "Button": return .orange
+        default: return .gray
+        }
+    }
+}
